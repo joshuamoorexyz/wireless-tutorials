@@ -1,118 +1,142 @@
-# 5G Initial Setup Procedure — Video Script & Talking Points
+# 5G Initial Setup Procedure — Video Script
 
 ---
 
-## Phase 1: Cell Search & Synchronization (0:00–0:30)
+## Phase 1: Cell Search & Synchronization (0:00–0:45)
 
-**On-screen:** UE icon appears, scanning animation, SSB pulses from gNB
+**Animation:** Cell tower (gNB) with radio waves pulsing outward. Correlation plot builds up showing a peak. Zadoff-Chu and m-sequence equations appear.
 
 **Narrator:**
-"When a 5G device powers on, it doesn't know where the network is. The first thing it does is scan through the available NR frequency bands, searching for a 5G cell."
+"When a 5G device powers on, it scans NR frequency bands looking for a cell. The gNB periodically transmits SS/PBCH blocks containing PSS and SSS."
 
-"The gNodeB — the 5G base station — periodically broadcasts Synchronization Signal Blocks, or SSBs. Each SSB contains the Primary and Secondary Synchronization Signals — PSS and SSS."
+"The **Primary Synchronization Signal** uses a Zadoff-Chu sequence:"
 
-"The UE locks onto these signals to achieve frame synchronization and obtain the Physical Cell Identity. This is the very first handshake between the device and the network."
+\[
+a_u(n) = \exp\!\left(-j \frac{\pi u\,n(n+1)}{N_{\text{ZC}}}\right),\quad N_{\text{ZC}} = 127
+\]
+
+"There are three possible root indices: \(u = 25, 29, 34\). The UE correlates against all three and picks the strongest peak — this gives it the **Physical Cell ID** within the cell group."
+
+"The **Secondary Synchronization Signal** uses two length-127 m-sequences multiplied together. Together PSS and SSS give the full \(N_{\text{ID}}^{\text{cell}} = 3N_{\text{ID}}^{(1)} + N_{\text{ID}}^{(2)}\)."
+
+"The UE achieves frame synchronization and knows where the cell's timing and frequency are."
 
 ---
 
-## Phase 2: System Information Acquisition (0:30–1:00)
+## Phase 2: System Information Acquisition (0:45–1:30)
 
-**On-screen:** MIB and SIB1 blocks appear above gNB, arrows flow to UE
+**Animation:** NR time-frequency resource grid appears. PBCH resources highlighted in purple. MIB bit fields displayed. SIB1 scheduling info shown.
 
 **Narrator:**
-"Once synchronized, the UE reads the Master Information Block — the MIB — carried on the Physical Broadcast Channel, or PBCH."
+"Once synchronized, the UE reads the **Master Information Block** carried on the Physical Broadcast Channel."
 
-"The MIB tells the UE where to find SIB1 — System Information Block 1 — which is scheduled on the PDSCH."
+"The MIB contains 23 bits of critical information: system frame number (6 bits), subcarrier spacing (1 bit), SSB-to-SIB1 offset (4 bits), DMRS position (1 bit), PDCCH configuration for SIB1 (8 bits), and 3 reserved bits."
 
-"SIB1 contains essential cell access parameters: the cell's tracking area code, public land mobile network identity, and scheduling information for all other SIBs. The UE now knows how to talk to this cell."
+"The MIB tells the UE where to find **SIB1** on the PDSCH. SIB1 repeats every 160 ms and contains cell access parameters: the PLMN identity, tracking area code, cell barring status, and scheduling information for all other SIBs."
+
+"The UE now knows the cell's configuration and can begin active communication."
 
 ---
 
-## Phase 3: Random Access (RACH) (1:00–1:40)
+## Phase 3: Random Access (RACH) (1:30–2:15)
 
-**On-screen:** Four arrows animate sequentially: MSG1→MSG2→MSG3→MSG4
+**Animation:** PRACH preamble waveform with cyclic prefix. Timing advance equation. Four-step handshake between UE and gNB.
 
 **Narrator:**
-"Now the UE needs to get the network's attention. It initiates the four-step Random Access procedure."
+"The UE needs to get the network's attention via the **Random Access Channel**. The PRACH preamble is also a Zadoff-Chu sequence, length 839 in FR1 or 139 in FR2, with a cyclic shift."
 
-"Step one — MSG1: the UE sends a PRACH preamble. This is essentially the device raising its hand and saying 'I'm here.'"
+"When the gNB receives the preamble, it estimates the **Timing Advance** — the round-trip delay between UE and gNB:"
 
-"Step two — the gNB responds with MSG2, the Random Access Response, or RAR. It grants the UE an uplink resource and provides a temporary identifier."
+\[
+N_{\text{TA}} = \frac{T_{\text{Rx}} - T_{\text{Tx}}}{2},\quad T_{\text{TA}} = (N_{\text{TA}} + N_{\text{TA,offset}})\,T_c
+\]
 
-"Step three — MSG3: the UE sends an RRC Setup Request, now using the allocated uplink grant."
+"\(T_c = 0.509\text{ ns}\) is the basic NR time unit. The TA ensures the UE's uplink transmissions arrive in the correct time window."
 
-"Step four — the gNB sends MSG4, a Contention Resolution message, confirming that this particular UE is now uniquely identified on the cell."
+"The four-step handshake proceeds:"
+
+- **MSG1:** UE sends PRACH preamble
+- **MSG2:** gNB responds with Random Access Response (RAR) — TA value and uplink grant
+- **MSG3:** UE sends RRC Setup Request on the allocated grant
+- **MSG4:** gNB sends Contention Resolution — the UE is now uniquely identified
 
 ---
 
-## Phase 4: RRC Connection Setup (1:40–2:10)
+## Phase 4: RRC Connection Setup (2:15–2:45)
 
-**On-screen:** RRC messages flow between UE and gNB, SRB1 label appears
+**Animation:** RRC state machine (IDLE → CONNECTED → INACTIVE). SRB1 message flow.
 
 **Narrator:**
-"With contention resolved, the UE and gNB establish an RRC connection. This is the radio resource control link."
+"The UE transitions from RRC_IDLE to RRC_CONNECTED. The gNB configures **Signaling Radio Bearer 1** — the dedicated control channel for NAS messages."
 
-"The gNB sends an RRCSetup message, configuring Signaling Radio Bearer 1 — SRB1. This dedicated channel carries all subsequent signaling messages between the UE and the network."
+"The RRCSetup message carries SRB1 configuration. The UE replies with RRCSetupComplete, which piggybacks the **Registration Request** NAS PDU inside."
 
-"The UE responds with RRCSetupComplete, which includes the initial NAS message — the registration request — piggybacked inside."
+"The UE can also transition to RRC_INACTIVE, a power-saving state where the UE stays CM-CONNECTED but with suspended radio resources."
 
 ---
 
-## Phase 5: Registration & Authentication (2:10–3:00)
+## Phase 5: Registration & Authentication (2:45–3:30)
 
-**On-screen:** Four network nodes appear — UE, gNB, AMF, AUSF/UDM — messages flow between them
+**Animation:** Messages flowing through UE → gNB → AMF → AUSF. 5G key hierarchy with KDF arrows.
 
 **Narrator:**
-"The gNB forwards the registration request to the AMF — the Access and Mobility Management Function — the core network's entry point for UE signaling."
+"The gNB forwards the Registration Request to the **AMF** — the Access and Mobility Management Function. The AMF requests authentication vectors from the AUSF."
 
-"The AMF triggers authentication with the AUSF and UDM. The network verifies the UE's identity and subscription data. This may involve a challenge-response exchange using the subscriber's permanent key stored on the USIM."
+"The network runs **5G AKA**: the UE proves its identity using the permanent key K stored on the USIM. The AUSF derives CK∥IK, then feeds them through a Key Derivation Function to produce the key hierarchy:"
 
-"Once authenticated, the AMF initiates a Security Mode Command procedure, establishing integrity protection and ciphering for all subsequent NAS signaling."
+\[
+K \rightarrow \text{CK∥IK} \rightarrow K_{\text{AUSF}} \rightarrow K_{\text{SEAF}} \rightarrow K_{\text{AMF}} \rightarrow K_{\text{NAS}}
+\]
 
-"Finally, the AMF sends a Registration Accept message back to the UE. The device is now registered on the network."
+"Each level is derived via KDF using the subscriber's SUPI, SN-name, and freshness parameters. The AMF establishes **NAS Security** with integrity and ciphering keys."
+
+"A Registration Accept message is sent back through the chain, confirming the UE is registered."
 
 ---
 
-## Phase 6: PDU Session Establishment (3:00–3:40)
+## Phase 6: PDU Session Establishment (3:30–4:15)
 
-**On-screen:** UE, gNB, UPF, and Data Network animate with PDU session arrows
+**Animation:** User plane protocol stack (SDAP/PDCP/RLC/MAC/PHY). QoS flow mapped to DRB. GTP-U tunneling. IP address assignment.
 
 **Narrator:**
-"Registration is complete, but the UE still can't send user data. It needs a PDU Session — a Protocol Data Unit session — which is the 5G equivalent of a data connection."
+"Registration is complete, but the UE needs a data connection. It sends a **PDU Session Establishment Request**."
 
-"The UE sends a PDU Session Establishment Request. This flows through the gNB to the AMF, which selects a UPF — the User Plane Function."
+"The user plane runs on a layered protocol stack: SDAP (QoS mapping), PDCP (ciphering + header compression), RLC (segmentation + ARQ), MAC (scheduling + HARQ), and PHY (OFDM)."
 
-"The UPF is the anchor point for the user plane. The network establishes N4 rules between the SMF and UPF, and the UPF is connected to the external Data Network — whether that's the internet, a corporate VPN, or an edge computing platform."
+"Each QoS flow is identified by a **5QI** value and mapped to a Data Radio Bearer. The gNB matches QoS requirements to appropriate RLC modes and priority."
 
-"The UE is assigned an IP address, and user data can now flow through the gNB to the UPF and out to the network."
+"On the N3 interface, data is encapsulated in **GTP-U tunnels** using a 32-bit Tunnel Endpoint Identifier (TEID):"
+
+\[
+\text{GTP header} = \text{TEID} + \text{SeqNo} + \text{N-PDU}
+\]
+
+"The UE is assigned an IP address and now has full user-plane connectivity."
 
 ---
 
-## Phase 7: Summary (3:40–4:00)
+## Phase 7: Summary (4:15–4:30)
 
-**On-screen:** All six steps listed vertically on screen, final "Connected" message
+**Animation:** Six phases listed with key math callouts. Final "Connected" message.
 
 **Narrator:**
-"Let's recap. The 5G initial setup procedure happens in six phases:"
+"Let's recap. Initial setup completes in six phases:"
 
-"1.  Cell Search  — synchronizing to the gNB's SSB"
-"2.  System Info  — reading MIB and SIB1 for cell parameters"
-"3.  Random Access  — the four-step RACH procedure"
-"4.  RRC Setup  — establishing Signaling Radio Bearer 1"
-"5.  Registration  — authenticating with the core network via the AMF"
-"6.  PDU Session  — creating the data path through the UPF"
+1.  **Cell Search** — PSS/SSS, Zadoff-Chu correlation
+2.  **System Info** — MIB (PBCH) + SIB1 (PDSCH) on the resource grid
+3.  **Random Access** — 4-step RACH with timing advance
+4.  **RRC Setup** — SRB1, RRC state machine transitions
+5.  **Registration** — 5G AKA with KDF key hierarchy
+6.  **PDU Session** — Protocol stack, QoS flows, GTP-U tunneling
 
-"Once all six steps are complete, the UE is fully connected to the 5G network and ready for data transfer. This entire process typically completes in under a second on a modern 5G network."
+"All six phases typically complete in under a second on a modern 5G network. The UE is now fully connected and ready for data transfer."
 
 ---
 
-## Render Command
+## Render
 
 ```bash
-manim -pql 5g_initial_setup.py FiveGInitialSetup
-```
-
-For higher quality (recommended for final video):
-```bash
-manim -pqh 5g_initial_setup.py FiveGInitialSetup
+source .venv/bin/activate
+manim -pql tutorials/5g-initial-setup/5g_initial_setup.py FiveGInitialSetup   # preview
+manim -pqh tutorials/5g-initial-setup/5g_initial_setup.py FiveGInitialSetup   # final
 ```
