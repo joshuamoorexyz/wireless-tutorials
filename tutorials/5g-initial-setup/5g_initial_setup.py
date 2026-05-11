@@ -185,15 +185,15 @@ class FiveGInitialSetup(Scene):
         self.animate_box_in(gnb, gnb_pos)
 
         msgs = [
-            ("RRCSetupRequest", YELLOW, ue, gnb, UP),
-            ("RRCSetup", GREEN, gnb, ue, DOWN),
-            ("RRCSetupComplete", YELLOW, ue, gnb, UP),
+            ("RRCSetupRequest", YELLOW, ue, gnb, 1),
+            ("RRCSetup", GREEN, gnb, ue, -1),
+            ("RRCSetupComplete", YELLOW, ue, gnb, 1),
         ]
 
         y_offset = 1.2
         for text, color, sender, receiver, direction in msgs:
             lbl = Text(text, font_size=20, color=color, weight=BOLD)
-            if direction == UP:
+            if direction == 1:
                 pad = sender.get_top() + UP * y_offset
             else:
                 pad = sender.get_bottom() + DOWN * y_offset
@@ -207,7 +207,7 @@ class FiveGInitialSetup(Scene):
                 stroke_width=2.5,
                 buff=0.2,
             )
-            if direction == UP:
+            if direction == 1:
                 arrow.shift(UP * (y_offset - 0.2))
             else:
                 arrow.shift(DOWN * (y_offset - 0.2))
